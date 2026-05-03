@@ -283,6 +283,17 @@ async function main() {
     },
   });
 
+  // Demo `firma@example.com` kullanıcısını ilk firmanın sahibi yap (alt sayfalar
+  // 307 redirect vermesin diye — test akışı için)
+  const firstFirm = await db.firm.findFirst({
+    where: { status: "ACTIVE" },
+    orderBy: { createdAt: "asc" },
+  });
+  if (firstFirm && firstFirm.ownerId !== demoFirmOwner.id) {
+    await db.firm.update({ where: { id: firstFirm.id }, data: { ownerId: demoFirmOwner.id } });
+    console.log(`  Demo firma sahibi (firma@example.com) → ${firstFirm.name}`);
+  }
+
   console.log("✓ Seed tamam.");
 }
 
