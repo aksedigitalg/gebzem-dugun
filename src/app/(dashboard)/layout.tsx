@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth, signOut } from "@/auth";
+import { auth } from "@/auth";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 
@@ -16,9 +16,4 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <Footer />
     </div>
   );
-}
-
-export async function signOutAction() {
-  "use server";
-  await signOut({ redirectTo: "/" });
 }

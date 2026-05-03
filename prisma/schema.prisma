@@ -499,6 +499,7 @@ model Message {
   content        String   @db.Text
   isRead         Boolean  @default(false)
   readAt         DateTime?
+  deletedAt      DateTime?
   attachments    String[] @default([])
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -507,9 +508,8 @@ model Message {
 
   createdAt DateTime @default(now())
 
-  @@index([conversationId])
-  @@index([senderId])
-  @@index([receiverId])
+  @@index([conversationId, createdAt(sort: Desc)])
+  @@index([receiverId, isRead])
 }
 
 // ==============================================================================
@@ -691,20 +691,34 @@ model BlogPost {
 // BİLDİRİM
 // ==============================================================================
 
+enum NotificationKind {
+  INQUIRY_NEW
+  INQUIRY_RESPONDED
+  MESSAGE_NEW
+  REVIEW_NEW
+  REVIEW_REPLY
+  FIRM_APPROVED
+  FIRM_REJECTED
+  ADMIN_BROADCAST
+  GENERIC
+}
+
 model Notification {
-  id     String  @id @default(cuid())
+  id     String           @id @default(cuid())
   userId String
-  type   String
+  kind   NotificationKind @default(GENERIC)
   title  String
-  body   String
+  body   String           @db.Text
   link   String?
-  isRead Boolean @default(false)
+  meta   Json?
+  isRead Boolean          @default(false)
+  readAt DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
-  @@index([userId, isRead])
+  @@index([userId, isRead, createdAt(sort: Desc)])
 }
 
 // ==============================================================================
@@ -765,20 +779,33 @@ model Payment {
 // SİSTEM
 // ==============================================================================
 
+enum AuditStatus {
+  SUCCESS
+  FAILURE
+}
+
 model AuditLog {
-  id       String  @id @default(cuid())
-  userId   String?
-  action   String
-  resource String
-  meta     Json?
-  ip       String?
+  id             String      @id @default(cuid())
+  userId         String?
+  actorRole      String?
+  impersonatorId String?
+  action         String
+  resource       String
+  resourceId     String?
+  status         AuditStatus @default(SUCCESS)
+  meta           Json?
+  before         Json?
+  after          Json?
+  ip             String?
+  userAgent      String?
+  requestId      String?
 
   user User? @relation(fields: [userId], references: [id])
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz
 
-  @@index([userId])
-  @@index([resource])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([resource, resourceId, createdAt(sort: Desc)])
 }
 
 model Region {

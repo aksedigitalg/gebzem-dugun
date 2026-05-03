@@ -10,6 +10,7 @@ import { CATEGORIES, CATEGORY_GROUPS } from "@/config/categories";
 import { PRIMARY_DISTRICTS } from "@/config/regions";
 import { cn } from "@/lib/utils";
 import { UserMenu } from "./user-menu";
+import { NotificationBell } from "./notification-bell";
 
 const groupedCategories = Object.entries(CATEGORY_GROUPS).map(([groupKey, label]) => ({
   groupKey,
@@ -63,7 +64,10 @@ export function Header() {
 
         <div className="flex items-center gap-2">
           {isAuthed ? (
-            <UserMenu user={session.user} />
+            <>
+              <NotificationBell />
+              <UserMenu user={session.user} />
+            </>
           ) : isLoading ? (
             // Hydration sırasında skeleton — flash önler
             <div className="hidden h-9 w-32 animate-pulse rounded-full bg-muted lg:block" />
