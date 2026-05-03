@@ -7,8 +7,11 @@ import {
 } from "lucide-react";
 import { getFirmBySlug } from "@/lib/firm";
 import { Badge } from "@/components/ui/badge";
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
 import { InquiryButton } from "@/components/firm/inquiry-modal";
 import { MessageButton } from "@/components/firm/message-button";
+import { FavoriteButton } from "@/components/firm/favorite-button";
 import { FirmGallery } from "@/components/firm/firm-gallery";
 import { formatPrice, relativeTime } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
@@ -45,19 +48,47 @@ export default async function FirmaProfilPage({
 
   const primaryCat = firm.categories.find((c) => c.isPrimary)?.category;
 
+  // Bu kullanıcı bu firmayı favorilemiş mi?
+  const session = await auth();
+  let isFavorited = false;
+  if (session?.user?.id) {
+    const fav = await db.favorite.findUnique({
+      where: { userId_firmId: { userId: session.user.id, firmId: firm.id } },
+    });
+    isFavorited = !!fav;
+  }
+
   return (
     <div className="bg-muted/20">
       {/* HERO */}
-      <section className="relative h-64 w-full overflow-hidden bg-secondary sm:h-80 md:h-96">
+      <section className="relative h-64 w-full overflow-hidden sm:h-80 md:h-96">
         {firm.coverImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={firm.coverImage} alt={firm.name} className="h-full w-full object-cover" />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={firm.coverImage} alt={firm.name} className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          </>
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-secondary to-secondary/70 text-white/30">
-            <Building2 className="h-20 w-20" />
+          // Görsel yoksa: dekoratif gradient + firma adı + animasyonlu desen
+          <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-br from-primary via-secondary to-accent">
+            {/* Dekoratif blur'lu daireler */}
+            <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-white/15 blur-3xl" aria-hidden />
+            <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-white/10 blur-3xl" aria-hidden />
+            <div className="absolute inset-0 [background-image:radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:24px_24px]" aria-hidden />
+
+            <div className="relative z-10 px-6 text-center">
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/70">
+                {primaryCat?.name ?? "Düğün Hizmeti"}
+              </p>
+              <h1 className="mt-3 font-display text-4xl font-semibold text-white drop-shadow-lg sm:text-5xl md:text-6xl">
+                {firm.name}
+              </h1>
+              <p className="mt-3 inline-flex items-center gap-1.5 text-sm text-white/85">
+                <MapPin className="h-3.5 w-3.5" /> {firm.district}, {firm.city}
+              </p>
+            </div>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
       </section>
 
       <div className="container-page -mt-32 pb-16 md:-mt-24">
@@ -291,6 +322,7 @@ export default async function FirmaProfilPage({
               </p>
               <InquiryButton firmId={firm.id} firmName={firm.name} />
               <MessageButton firmId={firm.id} firmName={firm.name} />
+              <FavoriteButton firmId={firm.id} initiallyFavorited={isFavorited} />
 
               <div className="space-y-2 pt-3">
                 <a

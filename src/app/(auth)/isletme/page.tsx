@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Heart, ArrowRight } from "lucide-react";
 import { auth } from "@/auth";
 import { FirmSigninForm } from "./form";
+import { DemoCredentials } from "@/components/auth/demo-credentials";
 
 export const metadata: Metadata = {
   title: "İşletme Girişi",
@@ -36,6 +37,8 @@ export default async function IsletmeLoginPage() {
       </div>
 
       <FirmSigninForm />
+
+      <DemoCredentials variant="firm" />
 
       <p className="text-center text-sm text-muted-foreground">
         Henüz işletme hesabınız yok mu?{" "}

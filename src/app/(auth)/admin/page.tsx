@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Shield } from "lucide-react";
 import { auth } from "@/auth";
 import { AdminSigninForm } from "./form";
+import { DemoCredentials } from "@/components/auth/demo-credentials";
 
 export const metadata: Metadata = {
   title: "Yönetici Girişi",
@@ -37,6 +38,8 @@ export default async function AdminLoginPage() {
       </div>
 
       <AdminSigninForm />
+
+      <DemoCredentials variant="admin" />
 
       <p className="text-center text-[11px] text-muted-foreground">
         Bu sayfa yalnızca platform yöneticileri içindir. Yetkisiz giriş denemeleri kaydedilir.

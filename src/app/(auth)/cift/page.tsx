@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Briefcase, ArrowRight } from "lucide-react";
 import { auth } from "@/auth";
 import { CoupleSigninForm } from "./form";
+import { DemoCredentials } from "@/components/auth/demo-credentials";
 
 export const metadata: Metadata = {
   title: "Çift Girişi",
@@ -38,6 +39,8 @@ export default async function CiftLoginPage() {
       </div>
 
       <CoupleSigninForm />
+
+      <DemoCredentials variant="couple" />
 
       <p className="text-center text-sm text-muted-foreground">
         Henüz hesabın yok mu?{" "}
