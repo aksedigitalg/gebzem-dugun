@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "Nasıl Çalışır?",
   description:
-    "GebzemDugun nasıl çalışır? Çiftler ve firmalar için adım adım kullanım rehberi.",
+    "Gebzem Düğün nasıl çalışır? Çiftler ve firmalar için adım adım kullanım rehberi.",
 };
 
 export default function NasilCalisirPage() {

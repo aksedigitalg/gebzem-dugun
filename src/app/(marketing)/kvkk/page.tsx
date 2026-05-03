@@ -3,7 +3,7 @@ import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "KVKK Aydınlatma Metni",
-  description: "GebzemDugun.com Kişisel Verilerin Korunması Kanunu (KVKK) Aydınlatma Metni.",
+  description: "Gebzem Düğün — Kişisel Verilerin Korunması Kanunu (KVKK) Aydınlatma Metni.",
 };
 
 export default function KvkkPage() {

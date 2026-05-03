@@ -8,7 +8,7 @@ import { FirmSignupForm } from "./form";
 export const metadata: Metadata = {
   title: "İşletme Kaydı",
   description:
-    "Düğün sektörü firmalar için ücretsiz işletme kaydı. GebzemDugun.com'da Gebze ve çevre ilçelerin çiftlerine doğrudan ulaşın.",
+    "Düğün sektörü firmalar için ücretsiz işletme kaydı. Gebzem Düğün'de Gebze ve çevre ilçelerin çiftlerine doğrudan ulaşın.",
 };
 
 const benefits = [
@@ -38,7 +38,7 @@ export default async function IsletmeKayitPage() {
           Ücretsiz başla, istediğin zaman premium'a geç
         </span>
         <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight">
-          İşletmeni GebzemDugun'a ekle
+          İşletmeni Gebzem Düğün'e ekle
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           5 dakikada profilini oluştur; 24 saat içinde onaylanıp yayına çık.

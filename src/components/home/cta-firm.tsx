@@ -25,7 +25,7 @@ export function CtaFirm() {
               Düğün sektöründesin? <br /> Müşterilerine en kısa yoldan ulaş.
             </h2>
             <p className="mt-4 max-w-xl text-white/85">
-              GebzemDugun, Gebze ve çevre ilçelerin yerel pazarına odaklanmış bir
+              Gebzem Düğün, Gebze ve çevre ilçelerin yerel pazarına odaklanmış bir
               marketplace'tir. İlanını ücretsiz aç, premium paketlerle büyü.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">

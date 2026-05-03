@@ -1,6 +1,8 @@
 export const siteConfig = {
-  name: "GebzemDugun",
-  fullName: "GebzemDugun.com",
+  name: "Gebzem Düğün",
+  fullName: "Gebzem Düğün",
+  // SEO ve schema için ayrı ayrı tutulan alan adı (Türkçe karakter alamayan domain)
+  domain: "gebzemdugun.com",
   description:
     "Gebze, Darıca, Çayırova ve Dilovası'ndaki tüm düğün, nişan, kına ve sünnet hizmeti veren firmaları tek platformda karşılaştır. Ücretsiz teklif al, yorumları oku, en uygun firmayı seç.",
   shortDescription: "Gebze ve çevre ilçelerin yerel düğün rehberi",
