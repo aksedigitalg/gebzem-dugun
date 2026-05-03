@@ -2,12 +2,14 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Heart, LogIn, Menu, Search, Sparkles, X } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
+import { Heart, LogIn, LogOut, Menu, Search, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
 import { CATEGORIES, CATEGORY_GROUPS } from "@/config/categories";
 import { PRIMARY_DISTRICTS } from "@/config/regions";
 import { cn } from "@/lib/utils";
+import { UserMenu } from "./user-menu";
 
 const groupedCategories = Object.entries(CATEGORY_GROUPS).map(([groupKey, label]) => ({
   groupKey,
@@ -18,6 +20,9 @@ const groupedCategories = Object.entries(CATEGORY_GROUPS).map(([groupKey, label]
 export function Header() {
   const [open, setOpen] = React.useState(false);
   const [megaOpen, setMegaOpen] = React.useState(false);
+  const { data: session, status } = useSession();
+  const isAuthed = status === "authenticated" && !!session?.user;
+  const isLoading = status === "loading";
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/85 backdrop-blur-md">
@@ -57,18 +62,27 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link href="/isletme/kayit" className="hidden lg:inline-flex">
-            <Button variant="outline" size="sm">
-              <Sparkles className="h-4 w-4" />
-              İşletmeni Ekle
-            </Button>
-          </Link>
-          <Link href="/cift" className="hidden lg:inline-flex">
-            <Button size="sm">
-              <LogIn className="h-4 w-4" />
-              Giriş Yap
-            </Button>
-          </Link>
+          {isAuthed ? (
+            <UserMenu user={session.user} />
+          ) : isLoading ? (
+            // Hydration sırasında skeleton — flash önler
+            <div className="hidden h-9 w-32 animate-pulse rounded-full bg-muted lg:block" />
+          ) : (
+            <>
+              <Link href="/isletme/kayit" className="hidden lg:inline-flex">
+                <Button variant="outline" size="sm">
+                  <Sparkles className="h-4 w-4" />
+                  İşletmeni Ekle
+                </Button>
+              </Link>
+              <Link href="/cift" className="hidden lg:inline-flex">
+                <Button size="sm">
+                  <LogIn className="h-4 w-4" />
+                  Giriş Yap
+                </Button>
+              </Link>
+            </>
+          )}
           <button
             type="button"
             aria-label="Menüyü aç"
@@ -121,6 +135,32 @@ export function Header() {
               </button>
             </div>
 
+            {/* Mobil kullanıcı kartı veya giriş butonları */}
+            {isAuthed ? (
+              <MobileUserCard
+                name={session.user.name}
+                email={session.user.email}
+                role={session.user.role}
+                onClose={() => setOpen(false)}
+              />
+            ) : (
+              <div className="mb-6 space-y-1">
+                <Link href="/cift" className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted" onClick={() => setOpen(false)}>
+                  Çift Girişi
+                </Link>
+                <Link href="/cift/kayit" className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted" onClick={() => setOpen(false)}>
+                  Çift Üye Ol
+                </Link>
+                <div className="my-1 h-px bg-border" />
+                <Link href="/isletme" className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted" onClick={() => setOpen(false)}>
+                  İşletme Girişi
+                </Link>
+                <Link href="/isletme/kayit" className="block rounded-lg bg-secondary px-3 py-2.5 text-sm font-medium text-white" onClick={() => setOpen(false)}>
+                  İşletmeni Ekle
+                </Link>
+              </div>
+            )}
+
             <div className="relative mb-6">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -130,23 +170,7 @@ export function Header() {
               />
             </div>
 
-            <div className="space-y-1">
-              <Link href="/cift" className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted" onClick={() => setOpen(false)}>
-                Çift Girişi
-              </Link>
-              <Link href="/cift/kayit" className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted" onClick={() => setOpen(false)}>
-                Çift Üye Ol
-              </Link>
-              <div className="my-1 h-px bg-border" />
-              <Link href="/isletme" className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted" onClick={() => setOpen(false)}>
-                İşletme Girişi
-              </Link>
-              <Link href="/isletme/kayit" className="block rounded-lg bg-secondary px-3 py-2.5 text-sm font-medium text-white" onClick={() => setOpen(false)}>
-                İşletmeni Ekle
-              </Link>
-            </div>
-
-            <div className="mt-8">
+            <div>
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Bölgeler
               </h3>
@@ -188,5 +212,74 @@ export function Header() {
         </div>
       )}
     </header>
+  );
+}
+
+function MobileUserCard({
+  name,
+  email,
+  role,
+  onClose,
+}: {
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
+  onClose: () => void;
+}) {
+  const dashboardHref =
+    role === "FIRM_OWNER" || role === "FIRM_STAFF"
+      ? "/firma-paneli"
+      : role === "ADMIN" || role === "SUPER_ADMIN"
+      ? "/admin/panel"
+      : "/hesabim";
+
+  const roleLabel =
+    role === "FIRM_OWNER" || role === "FIRM_STAFF"
+      ? "İşletme"
+      : role === "ADMIN" || role === "SUPER_ADMIN"
+      ? "Yönetici"
+      : "Çift";
+
+  const initials = (name?.trim()?.split(/\s+/).map((p) => p[0]).slice(0, 2).join("") ||
+    email?.[0] ||
+    "G")
+    .toUpperCase();
+
+  return (
+    <div className="mb-6 space-y-3">
+      <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/40 p-3">
+        <span className="grid h-10 w-10 place-items-center rounded-full bg-primary text-sm font-semibold text-white">
+          {initials}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            {roleLabel}
+          </p>
+          <p className="truncate text-sm font-semibold">{name ?? email}</p>
+          {email && <p className="truncate text-xs text-muted-foreground">{email}</p>}
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <Link
+          href={dashboardHref}
+          onClick={onClose}
+          className="block rounded-lg bg-primary px-3 py-2.5 text-center text-sm font-medium text-white"
+        >
+          Panelime Git
+        </Link>
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            void signOut({ callbackUrl: "/", redirect: true });
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-100"
+        >
+          <LogOut className="h-4 w-4" />
+          Çıkış Yap
+        </button>
+      </div>
+    </div>
   );
 }
