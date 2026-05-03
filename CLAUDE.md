@@ -484,10 +484,20 @@ Vercel Dashboard → Project Settings → Domains → `gebzemdugun.com` ekle. DN
 - **Güvenlik** — auth-guards, rate-limit, sanitize, audit (production-grade alanlar), IDOR-safe Prisma sorguları
 - **CRM-style dashboard shell** — sidebar nav (badge'li), stat cards, breadcrumb
 
-### Henüz yapılmadı (Faz 2 / v0.6+)
+### v0.6 — Eksik sayfalar tamamlandı + UX iyileştirme
+- **Çift dashboard** tam: favorilerim (gerçek favori firma listesi), checklist (10 default şablon + optimistic toggle), düğün-detayları (full edit form), ayarlar (profil + şifre), bütçem & davetlilerim (PageStub)
+- **Firma dashboard** tam: yorumlar (gerçek), abonelik (4-tier pricing kartı), müsait-takvim & ayarlar (PageStub)
+- **Admin** tam: yorumlar (moderation), kullanıcılar (filter+search tablosu), audit-log (production-grade timeline), kategoriler/blog/abonelikler/ayarlar (PageStub)
+- **Stub helper** (`<PageStub>`): tutarlı "yakında" UI — ikon+başlık+özellik listesi+opsiyonel CTA
+- **Hero placeholder fix:** coverImage yoksa siyah ekran yerine gradient (primary→secondary→accent) + blur orblar + dot pattern + firma adı + kategori
+- **FavoriteButton:** firma profilinde sticky aksiyon panelinde, anonim için /cift'e redirect, optimistic state
+- **DemoCredentials banner:** 3 auth sayfasında (cift/isletme/admin) copy-buttonlı email+şifre kartı — kullanıcının "nasıl giriş yapacağım" sorusunu çözer
+- **Server actions yeni:** toggleFavoriteAction, upsertChecklistItemAction (+ toggle/delete), updateWeddingDetailsAction, updateProfileAction, changePasswordAction (bcrypt re-verify ile)
+
+### Henüz yapılmadı (Faz 2 / v0.7+)
 - Yorum yazma akışı (sadece okuma var)
-- Müsaitlik takvimi UI
-- Bütçe / davetli / checklist (çift araçları) UI
+- Müsaitlik takvimi UI (DB hazır, UI stub)
+- Bütçe / davetli (DB hazır, UI stub)
 - Premium üyelik + iyzico ödeme entegrasyonu
 - E-posta tetikleyicileri (Resend) — kayıt onay, teklif bildirimi
 - SMS bildirimi (Netgsm)
