@@ -1,0 +1,807 @@
+// ==============================================================================
+// GebzemDugun.com — Prisma Schema
+// PostgreSQL üzerinde marketplace veri modeli
+// ==============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ==============================================================================
+// AUTH & KULLANICI
+// ==============================================================================
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  FIRM_OWNER
+  FIRM_STAFF
+  COUPLE
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+  BANNED
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  emailVerified DateTime?
+  phone         String?    @unique
+  phoneVerified DateTime?
+  passwordHash  String?
+  name          String?
+  image         String?
+  role          UserRole   @default(COUPLE)
+  status        UserStatus @default(ACTIVE)
+
+  // Çift profili (rol = COUPLE ise)
+  weddingDate DateTime?
+  partnerName String?
+  budget      Int?
+  guestCount  Int?
+  city        String?
+  district    String?
+  about       String?   @db.Text
+
+  // Auth.js ilişkileri
+  accounts Account[]
+  sessions Session[]
+
+  // Domain ilişkileri
+  ownedFirms       Firm[]              @relation("FirmOwner")
+  staffMemberships FirmStaff[]
+  reviews          Review[]
+  favorites        Favorite[]
+  inquiries        Inquiry[]
+  conversations    Conversation[]
+  sentMessages     Message[]           @relation("MessagesSender")
+  receivedMessages Message[]           @relation("MessagesReceiver")
+  budgetItems      BudgetItem[]
+  guests           Guest[]
+  checklist        ChecklistItem[]
+  notifications    Notification[]
+  blogPosts        BlogPost[]
+  reviewVotes      ReviewVote[]
+  bookings         Booking[]
+  auditLogs        AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+  @@index([city, district])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ==============================================================================
+// FİRMA
+// ==============================================================================
+
+enum MembershipType {
+  FREE
+  STANDARD
+  PREMIUM
+  PRO
+}
+
+enum FirmStatus {
+  PENDING
+  ACTIVE
+  PAUSED
+  SUSPENDED
+  REJECTED
+}
+
+model Firm {
+  id               String  @id @default(cuid())
+  slug             String  @unique
+  name             String
+  legalName        String?
+  taxNumber        String?
+  taxOffice        String?
+  description      String  @db.Text
+  shortDescription String  @db.VarChar(280)
+  founded          Int?
+
+  // İletişim
+  phone     String
+  whatsapp  String?
+  email     String
+  website   String?
+  instagram String?
+  facebook  String?
+  tiktok    String?
+  youtube   String?
+  pinterest String?
+
+  // Konum
+  address      String
+  city         String  @default("Kocaeli")
+  district     String
+  neighborhood String?
+  postalCode   String?
+  latitude     Float?
+  longitude    Float?
+
+  // Hizmet alanı (bölge slug'ları)
+  serviceAreas String[] @default([])
+
+  // Görseller
+  logo        String?
+  coverImage  String?
+
+  // Üyelik
+  membershipType   MembershipType @default(FREE)
+  membershipExpiry DateTime?
+
+  // Durum
+  isVerified Boolean    @default(false)
+  isFeatured Boolean    @default(false)
+  status     FirmStatus @default(PENDING)
+
+  // Sahip
+  ownerId String
+  owner   User   @relation("FirmOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Çalışma saatleri (JSON: { mon: { open: "09:00", close: "18:00" }, ... })
+  workingHours Json?
+
+  // İçerikler
+  categories    FirmCategory[]
+  gallery       GalleryItem[]
+  videos        VideoItem[]
+  services      Service[]
+  packages      Package[]
+  faqs          FAQ[]
+  staff         FirmStaff[]
+  documents     FirmDocument[]
+  announcements Announcement[]
+
+  // Etkileşimler
+  reviews       Review[]
+  favorites     Favorite[]
+  inquiries     Inquiry[]
+  bookings      Booking[]
+  availability  Availability[]
+  conversations Conversation[]
+  subscription  Subscription?
+
+  // İstatistikler
+  viewCount    Int   @default(0)
+  inquiryCount Int   @default(0)
+  reviewCount  Int   @default(0)
+  rating       Float @default(0)
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([city, district])
+  @@index([membershipType])
+  @@index([status])
+  @@index([rating])
+}
+
+model FirmStaff {
+  id     String @id @default(cuid())
+  firmId String
+  userId String
+  role   String @default("staff")
+
+  firm Firm @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([firmId, userId])
+}
+
+model FirmDocument {
+  id       String  @id @default(cuid())
+  firmId   String
+  type     String // "vergi_levha", "imza_sirkuleri", "ticari_sicil"
+  url      String
+  verified Boolean @default(false)
+  notes    String?
+
+  firm Firm @relation(fields: [firmId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+// ==============================================================================
+// KATEGORİ
+// ==============================================================================
+
+model Category {
+  id              String  @id @default(cuid())
+  slug            String  @unique
+  name            String
+  shortName       String?
+  description     String  @db.Text
+  icon            String?
+  image           String?
+  parentId        String?
+  parent          Category?  @relation("CategoryParent", fields: [parentId], references: [id])
+  children        Category[] @relation("CategoryParent")
+  order           Int     @default(0)
+  isActive        Boolean @default(true)
+  metaTitle       String?
+  metaDescription String?
+
+  firms FirmCategory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentId])
+  @@index([slug])
+}
+
+model FirmCategory {
+  firmId     String
+  categoryId String
+  isPrimary  Boolean @default(false)
+
+  firm     Firm     @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([firmId, categoryId])
+  @@index([categoryId])
+}
+
+// ==============================================================================
+// HİZMETLER & PAKETLER
+// ==============================================================================
+
+model Service {
+  id          String  @id @default(cuid())
+  firmId      String
+  name        String
+  description String  @db.Text
+  priceMin    Int?
+  priceMax    Int?
+  currency    String  @default("TRY")
+  unit        String?
+  duration    String?
+  isPopular   Boolean @default(false)
+  order       Int     @default(0)
+
+  firm Firm @relation(fields: [firmId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Package {
+  id          String   @id @default(cuid())
+  firmId      String
+  name        String
+  description String   @db.Text
+  price       Int
+  currency    String   @default("TRY")
+  features    String[]
+  isPopular   Boolean  @default(false)
+  order       Int      @default(0)
+
+  firm Firm @relation(fields: [firmId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+// ==============================================================================
+// MEDYA
+// ==============================================================================
+
+model GalleryItem {
+  id           String  @id @default(cuid())
+  firmId       String
+  url          String
+  thumbnailUrl String?
+  caption      String?
+  altText      String?
+  category     String?
+  order        Int     @default(0)
+  width        Int?
+  height       Int?
+
+  firm Firm @relation(fields: [firmId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([firmId])
+}
+
+model VideoItem {
+  id           String  @id @default(cuid())
+  firmId       String
+  url          String
+  thumbnailUrl String?
+  title        String?
+  duration     Int?
+  provider     String  @default("upload") // youtube | vimeo | upload | mux
+
+  firm Firm @relation(fields: [firmId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+// ==============================================================================
+// YORUMLAR
+// ==============================================================================
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FLAGGED
+}
+
+model Review {
+  id          String       @id @default(cuid())
+  firmId      String
+  userId      String
+  rating      Int
+  title       String?
+  content     String       @db.Text
+  weddingDate DateTime?
+  pros        String[]     @default([])
+  cons        String[]     @default([])
+  status      ReviewStatus @default(PENDING)
+  reply       String?      @db.Text
+  repliedAt   DateTime?
+  helpful     Int          @default(0)
+  isVerified  Boolean      @default(false)
+
+  firm   Firm          @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photos ReviewPhoto[]
+  votes  ReviewVote[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([firmId, userId])
+  @@index([status])
+}
+
+model ReviewPhoto {
+  id       String @id @default(cuid())
+  reviewId String
+  url      String
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+}
+
+model ReviewVote {
+  id       String @id @default(cuid())
+  reviewId String
+  userId   String
+  helpful  Boolean
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([reviewId, userId])
+}
+
+// ==============================================================================
+// TEKLİF & MESAJLAŞMA
+// ==============================================================================
+
+enum InquiryStatus {
+  NEW
+  READ
+  RESPONDED
+  CONVERTED
+  REJECTED
+  EXPIRED
+}
+
+model Inquiry {
+  id               String        @id @default(cuid())
+  userId           String
+  firmId           String
+  weddingDate      DateTime?
+  guestCount       Int?
+  budget           Int?
+  message          String        @db.Text
+  contactPhone     String
+  contactEmail     String
+  preferredContact String        @default("email") // email | phone | whatsapp
+  status           InquiryStatus @default(NEW)
+  firmResponse     String?       @db.Text
+  responseAt       DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firm Firm @relation(fields: [firmId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([firmId])
+  @@index([status])
+}
+
+model Conversation {
+  id            String    @id @default(cuid())
+  userId        String
+  firmId        String
+  lastMessageAt DateTime?
+  unreadCount   Int       @default(0)
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firm     Firm      @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, firmId])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String
+  receiverId     String
+  content        String   @db.Text
+  isRead         Boolean  @default(false)
+  readAt         DateTime?
+  attachments    String[] @default([])
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessagesSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver     User         @relation("MessagesReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+// ==============================================================================
+// FAVORİ & REZERVASYON
+// ==============================================================================
+
+model Favorite {
+  id     String @id @default(cuid())
+  userId String
+  firmId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firm Firm @relation(fields: [firmId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, firmId])
+}
+
+enum BookingStatus {
+  HOLD
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model Booking {
+  id     String        @id @default(cuid())
+  firmId String
+  userId String?
+  date   DateTime
+  status BookingStatus @default(HOLD)
+  notes  String?       @db.Text
+  amount Int?
+
+  firm Firm  @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([firmId, date])
+}
+
+model Availability {
+  id        String   @id @default(cuid())
+  firmId    String
+  date      DateTime @db.Date
+  isBlocked Boolean  @default(false)
+  reason    String?
+
+  firm Firm @relation(fields: [firmId], references: [id], onDelete: Cascade)
+
+  @@unique([firmId, date])
+}
+
+// ==============================================================================
+// SSS & DUYURU
+// ==============================================================================
+
+model FAQ {
+  id       String  @id @default(cuid())
+  firmId   String?
+  question String
+  answer   String  @db.Text
+  order    Int     @default(0)
+
+  firm Firm? @relation(fields: [firmId], references: [id], onDelete: Cascade)
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  firmId      String
+  title       String
+  content     String   @db.Text
+  imageUrl    String?
+  startDate   DateTime
+  endDate     DateTime
+  discountPct Int?
+  isActive    Boolean  @default(true)
+
+  firm Firm @relation(fields: [firmId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+// ==============================================================================
+// ÇİFT ARAÇLARI
+// ==============================================================================
+
+model BudgetItem {
+  id          String  @id @default(cuid())
+  userId      String
+  category    String
+  description String?
+  estimated   Int
+  actual      Int?
+  paid        Int     @default(0)
+  status      String  @default("planned")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Guest {
+  id         String  @id @default(cuid())
+  userId     String
+  name       String
+  side       String // "gelin" | "damat"
+  group      String?
+  phone      String?
+  email      String?
+  rsvpStatus String  @default("pending")
+  plusOne    Boolean @default(false)
+  table      Int?
+  notes      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ChecklistItem {
+  id          String    @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  category    String?
+  dueDate     DateTime?
+  completed   Boolean   @default(false)
+  order       Int       @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ==============================================================================
+// BLOG
+// ==============================================================================
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
+
+model BlogPost {
+  id              String     @id @default(cuid())
+  slug            String     @unique
+  title           String
+  excerpt         String     @db.VarChar(280)
+  content         String     @db.Text
+  coverImage      String?
+  category        String
+  tags            String[]   @default([])
+  authorId        String?
+  status          BlogStatus @default(DRAFT)
+  views           Int        @default(0)
+  metaTitle       String?
+  metaDescription String?
+
+  author User? @relation(fields: [authorId], references: [id])
+
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status])
+  @@index([category])
+}
+
+// ==============================================================================
+// BİLDİRİM
+// ==============================================================================
+
+model Notification {
+  id     String  @id @default(cuid())
+  userId String
+  type   String
+  title  String
+  body   String
+  link   String?
+  isRead Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}
+
+// ==============================================================================
+// ABONELİK & ÖDEME
+// ==============================================================================
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAST_DUE
+  TRIAL
+}
+
+model Subscription {
+  id        String             @id @default(cuid())
+  firmId    String             @unique
+  plan      MembershipType
+  status    SubscriptionStatus @default(TRIAL)
+  startDate DateTime           @default(now())
+  endDate   DateTime
+  autoRenew Boolean            @default(true)
+
+  firm     Firm      @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  subscriptionId String?
+  amount         Int
+  currency       String        @default("TRY")
+  status         PaymentStatus @default(PENDING)
+  provider       String // iyzico | paytr
+  providerRef    String?
+  invoiceNumber  String?
+  description    String?
+
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([providerRef])
+}
+
+// ==============================================================================
+// SİSTEM
+// ==============================================================================
+
+model AuditLog {
+  id       String  @id @default(cuid())
+  userId   String?
+  action   String
+  resource String
+  meta     Json?
+  ip       String?
+
+  user User? @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([resource])
+}
+
+model Region {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  type        String // city | district | neighborhood
+  parentId    String?
+  parent      Region?  @relation("RegionParent", fields: [parentId], references: [id])
+  children    Region[] @relation("RegionParent")
+  description String?  @db.Text
+  metaTitle   String?
+  metaDescription String?
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([parentId])
+  @@index([type])
+}
+
+model Setting {
+  key   String @id
+  value Json
+}
