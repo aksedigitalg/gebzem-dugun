@@ -65,7 +65,7 @@ export default function NasilCalisirPage() {
           ))}
         </ol>
         <div className="mt-8">
-          <Link href="/firma-ekle"><Button size="lg">Firmamı Ekle</Button></Link>
+          <Link href="/isletme/kayit"><Button size="lg">İşletmemi Ekle</Button></Link>
         </div>
       </section>
     </article>

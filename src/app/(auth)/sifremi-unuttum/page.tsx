@@ -24,7 +24,7 @@ export default function ForgotPasswordPage() {
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        <Link href="/giris" className="font-medium text-primary hover:underline">
+        <Link href="/cift" className="font-medium text-primary hover:underline">
           ← Giriş sayfasına dön
         </Link>
       </p>

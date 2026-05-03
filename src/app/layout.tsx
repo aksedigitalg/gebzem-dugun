@@ -1,19 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
 import { siteConfig } from "@/config/site";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const playfair = Playfair_Display({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-playfair",
-  display: "swap",
-});
+// Google Sans (proprietary) yerine Google Sans Flex — Google'ın açık lisanslı (OFL)
+// kardeş fontu. Görsel olarak Google Sans'a en yakın legal alternatif.
+// next/font kataloğunda olmayabileceği için doğrudan Google Fonts CSS API'si üzerinden
+// preconnect + stylesheet ile yüklüyoruz.
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -59,8 +51,16 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="tr" className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
-      <body className="font-sans">{children}</body>
+    <html lang="tr" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,300..700&display=swap"
+        />
+      </head>
+      <body className="font-sans antialiased">{children}</body>
     </html>
   );
 }

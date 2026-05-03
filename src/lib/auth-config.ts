@@ -1,28 +1,23 @@
 import type { NextAuthConfig } from "next-auth";
-import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
-import { z } from "zod";
-
-const credentialsSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-});
 
 /**
- * Edge-uyumlu auth konfigürasyonu.
- * Prisma adapter ve bcrypt'i içermez (bunlar yalnızca Node runtime'da çalışır).
- * `auth.ts` (full) bu konfige adapter'ı ekler.
+ * Edge-uyumlu auth konfigürasyonu (middleware tarafından import edilir).
+ * Burada KESİNLİKLE Credentials, bcrypt veya Prisma OLMAMALI — bunlar yalnızca
+ * Node runtime'da çalışır. Tam credentials provider `auth.ts` içinde tanımlı.
+ *
+ * NextAuth v5 önerilen split: https://authjs.dev/guides/edge-compatibility
  */
 export const authConfig = {
   pages: {
-    signIn: "/giris",
-    signOut: "/cikis",
-    error: "/giris",
+    signIn: "/cift",
+    signOut: "/",
+    error: "/cift",
     verifyRequest: "/email-dogrula",
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 gün
+    maxAge: 30 * 24 * 60 * 60,
   },
   providers: [
     Google({
@@ -30,31 +25,29 @@ export const authConfig = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       allowDangerousEmailAccountLinking: true,
     }),
-    Credentials({
-      credentials: {
-        email: { label: "E-posta", type: "email" },
-        password: { label: "Şifre", type: "password" },
-      },
-      // Asıl authorize fonksiyonu auth.ts içinde override edilir.
-      authorize: async () => null,
-    }),
   ],
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const role = auth?.user?.role;
+      const path = nextUrl.pathname;
 
-      const requiresAdmin = nextUrl.pathname.startsWith("/admin");
-      const requiresFirm = nextUrl.pathname.startsWith("/firma-paneli");
-      const requiresAccount = nextUrl.pathname.startsWith("/hesabim");
+      const isAdminPanel = path.startsWith("/admin/panel");
+      const isFirmDashboard = path.startsWith("/firma-paneli");
+      const isCoupleAccount = path.startsWith("/hesabim");
 
-      if (requiresAdmin) {
+      if (isAdminPanel) {
         return isLoggedIn && (role === "ADMIN" || role === "SUPER_ADMIN");
       }
-      if (requiresFirm) {
-        return isLoggedIn && (role === "FIRM_OWNER" || role === "FIRM_STAFF" || role === "ADMIN" || role === "SUPER_ADMIN");
+      if (isFirmDashboard) {
+        return isLoggedIn && (
+          role === "FIRM_OWNER" ||
+          role === "FIRM_STAFF" ||
+          role === "ADMIN" ||
+          role === "SUPER_ADMIN"
+        );
       }
-      if (requiresAccount) {
+      if (isCoupleAccount) {
         return isLoggedIn;
       }
       return true;
@@ -76,5 +69,3 @@ export const authConfig = {
   },
   trustHost: true,
 } satisfies NextAuthConfig;
-
-export { credentialsSchema };

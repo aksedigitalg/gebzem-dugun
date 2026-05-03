@@ -1,121 +1,64 @@
 import Link from "next/link";
-import { Star, MapPin, Award } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Sparkles, ArrowRight, Building2, Camera, PartyPopper, Crown } from "lucide-react";
 
-type FeaturedFirm = {
-  slug: string;
-  name: string;
-  category: string;
-  district: string;
-  rating: number;
-  reviewCount: number;
-  cover: string;
-  premium?: boolean;
-};
-
-const SAMPLE: FeaturedFirm[] = [
-  {
-    slug: "ornek-balo-salonu",
-    name: "Örnek Balo Salonu",
-    category: "Düğün Mekanı",
-    district: "Gebze",
-    rating: 4.9,
-    reviewCount: 127,
-    cover:
-      "https://images.unsplash.com/photo-1519741497674-611481863552?w=900&q=80&auto=format&fit=crop",
-    premium: true,
-  },
-  {
-    slug: "ornek-fotograf-stuyo",
-    name: "Mira Photography",
-    category: "Düğün Fotoğrafçısı",
-    district: "Darıca",
-    rating: 4.8,
-    reviewCount: 84,
-    cover:
-      "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=900&q=80&auto=format&fit=crop",
-  },
-  {
-    slug: "ornek-gelinlik-butik",
-    name: "Aurora Gelinlik",
-    category: "Gelinlik",
-    district: "Çayırova",
-    rating: 4.7,
-    reviewCount: 56,
-    cover:
-      "https://images.unsplash.com/photo-1594552072238-5c4a26f4f4ce?w=900&q=80&auto=format&fit=crop",
-  },
-  {
-    slug: "ornek-organizasyon",
-    name: "Bella Düğün Organizasyon",
-    category: "Düğün Organizasyonu",
-    district: "Gebze",
-    rating: 4.9,
-    reviewCount: 142,
-    cover:
-      "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=900&q=80&auto=format&fit=crop",
-    premium: true,
-  },
+/**
+ * Henüz onaylı, yayında firma yokken anasayfada gösterilen "yakında" hücreleri.
+ * Stok görsel kullanmıyoruz; gerçek firmalar onaylandıkça bu blok dinamik olarak
+ * en yüksek puanlı / Premium firmalarla doldurulacak.
+ */
+const PLACEHOLDER_CATEGORIES = [
+  { icon: Building2, label: "Düğün Mekanları", href: "/kategori/dugun-mekanlari" },
+  { icon: Camera, label: "Düğün Fotoğrafçıları", href: "/kategori/dugun-fotografcilari" },
+  { icon: PartyPopper, label: "Düğün Organizasyonu", href: "/kategori/dugun-organizasyonu" },
+  { icon: Crown, label: "Gelinlik", href: "/kategori/gelinlik" },
 ];
 
 export function FeaturedFirms() {
   return (
     <section className="container-page py-16 sm:py-20">
-      <div className="mb-10 flex items-end justify-between gap-4">
-        <div>
-          <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-            Öne çıkan firmalar
-          </h2>
-          <p className="mt-2 max-w-xl text-muted-foreground">
-            Doğrulanmış, yüksek puanlı ve hızlı yanıt veren ekipler — bu hafta öne çıkanlar.
-          </p>
-        </div>
-        <Link href="/kategori/dugun-mekanlari" className="hidden text-sm font-medium text-primary hover:underline sm:inline">
-          Daha fazlasını gör →
-        </Link>
+      <div className="mb-10 text-center">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+          <Sparkles className="h-3 w-3" />
+          Yakında
+        </span>
+        <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+          Öne çıkan firmalar burada listelenecek
+        </h2>
+        <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+          Platform yeni yayında — onaylı işletmeler eklendikçe en yüksek puanlı,
+          premium üyelikli firmalar bu alanda çiftlere sunulacak.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {SAMPLE.map((f) => (
+        {PLACEHOLDER_CATEGORIES.map(({ icon: Icon, label, href }) => (
           <Link
-            key={f.slug}
-            href={`/firma/${f.slug}`}
-            className="group overflow-hidden rounded-2xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg"
+            key={href}
+            href={href}
+            className="group flex aspect-[4/3] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-muted/30 p-6 text-center transition-all hover:-translate-y-0.5 hover:border-primary hover:bg-primary/5"
           >
-            <div className="relative aspect-[4/3] overflow-hidden bg-muted">
-              <img
-                src={f.cover}
-                alt={f.name}
-                loading="lazy"
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              {f.premium && (
-                <Badge variant="premium" className="absolute left-3 top-3 shadow-sm">
-                  <Award className="h-3 w-3" /> Premium
-                </Badge>
-              )}
-              <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-0.5 text-xs font-medium text-foreground shadow">
-                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> {f.rating.toFixed(1)}
-              </div>
-            </div>
-            <div className="p-5">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-primary">
-                {f.category}
-              </p>
-              <h3 className="font-display text-lg font-semibold leading-tight">{f.name}</h3>
-              <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                <MapPin className="h-3.5 w-3.5" /> {f.district}
-                <span aria-hidden>·</span>
-                <span>{f.reviewCount} yorum</span>
-              </div>
-            </div>
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-background text-primary">
+              <Icon className="h-5 w-5" />
+            </span>
+            <span className="font-display text-sm font-semibold text-foreground">
+              {label}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              kategorisinde firmalar →
+            </span>
           </Link>
         ))}
       </div>
 
-      <p className="mt-6 text-center text-xs text-muted-foreground">
-        ⓘ Liste demo amaçlıdır — gerçek firmalar onaylandıkça bu alan otomatik güncellenir.
-      </p>
+      <div className="mt-10 flex flex-wrap items-center justify-center gap-3 text-center">
+        <Link
+          href="/isletme/kayit"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition hover:border-primary hover:text-primary"
+        >
+          İlk firmalardan biri olmak ister misiniz?
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
     </section>
   );
 }

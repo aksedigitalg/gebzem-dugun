@@ -76,7 +76,7 @@ export function Footer() {
             <ul className="space-y-2">
               <li><Link href="/hakkimizda" className="text-sm text-muted-foreground hover:text-primary">Hakkımızda</Link></li>
               <li><Link href="/nasil-calisir" className="text-sm text-muted-foreground hover:text-primary">Nasıl Çalışır?</Link></li>
-              <li><Link href="/firma-ekle" className="text-sm text-muted-foreground hover:text-primary">Firma Ekle</Link></li>
+              <li><Link href="/isletme/kayit" className="text-sm text-muted-foreground hover:text-primary">İşletmeni Ekle</Link></li>
               <li><Link href="/iletisim" className="text-sm text-muted-foreground hover:text-primary">İletişim</Link></li>
               <li><Link href="/blog" className="text-sm text-muted-foreground hover:text-primary">Blog</Link></li>
             </ul>

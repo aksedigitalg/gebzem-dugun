@@ -57,13 +57,13 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link href="/firma-ekle" className="hidden lg:inline-flex">
+          <Link href="/isletme/kayit" className="hidden lg:inline-flex">
             <Button variant="outline" size="sm">
               <Sparkles className="h-4 w-4" />
-              Firmanı Ekle
+              İşletmeni Ekle
             </Button>
           </Link>
-          <Link href="/giris" className="hidden lg:inline-flex">
+          <Link href="/cift" className="hidden lg:inline-flex">
             <Button size="sm">
               <LogIn className="h-4 w-4" />
               Giriş Yap
@@ -131,14 +131,18 @@ export function Header() {
             </div>
 
             <div className="space-y-1">
-              <Link href="/giris" className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted" onClick={() => setOpen(false)}>
-                Giriş Yap
+              <Link href="/cift" className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted" onClick={() => setOpen(false)}>
+                Çift Girişi
               </Link>
-              <Link href="/kayit" className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted" onClick={() => setOpen(false)}>
-                Üye Ol
+              <Link href="/cift/kayit" className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted" onClick={() => setOpen(false)}>
+                Çift Üye Ol
               </Link>
-              <Link href="/firma-ekle" className="block rounded-lg bg-primary px-3 py-2.5 text-sm font-medium text-primary-foreground" onClick={() => setOpen(false)}>
-                Firmanı Ekle
+              <div className="my-1 h-px bg-border" />
+              <Link href="/isletme" className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted" onClick={() => setOpen(false)}>
+                İşletme Girişi
+              </Link>
+              <Link href="/isletme/kayit" className="block rounded-lg bg-secondary px-3 py-2.5 text-sm font-medium text-white" onClick={() => setOpen(false)}>
+                İşletmeni Ekle
               </Link>
             </div>
 

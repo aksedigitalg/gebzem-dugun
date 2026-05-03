@@ -40,8 +40,9 @@
 
   --color-subtle: #f8f5f0;
 
-  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-display: "Playfair Display", "Georgia", serif;
+  /* Google Sans Flex — açık lisanslı (OFL) Google Sans alternatifi */
+  --font-sans: "Google Sans Flex", "Google Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-display: "Google Sans Flex", "Google Sans", "Segoe UI", system-ui, sans-serif;
 
   --radius: 0.75rem;
 }
@@ -59,7 +60,8 @@
   }
   h1, h2, h3, h4, h5 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
+    font-weight: 600;
   }
   ::selection {
     background-color: color-mix(in srgb, var(--color-primary) 30%, transparent);

@@ -9,14 +9,14 @@ import { authConfig } from "@/lib/auth-config";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8),
+  password: z.string().min(1),
 });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(db),
   providers: [
-    ...authConfig.providers.filter((p) => p.id !== "credentials"),
+    ...authConfig.providers,
     Credentials({
       credentials: {
         email: { label: "E-posta", type: "email" },
@@ -27,10 +27,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const user = await db.user.findUnique({
-          where: { email: parsed.data.email },
+          where: { email: parsed.data.email.toLowerCase() },
         });
         if (!user || !user.passwordHash) return null;
-        if (user.status !== "ACTIVE" && user.status !== "PENDING") return null;
+        if (user.status === "BANNED" || user.status === "SUSPENDED") return null;
 
         const valid = await bcrypt.compare(parsed.data.password, user.passwordHash);
         if (!valid) return null;

@@ -29,7 +29,7 @@ export function CtaFirm() {
               marketplace'tir. İlanını ücretsiz aç, premium paketlerle büyü.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/firma-ekle">
+              <Link href="/isletme/kayit">
                 <Button size="lg" variant="accent" className="bg-white text-secondary hover:bg-white/90">
                   Firmanı Ücretsiz Ekle <ArrowRight className="h-4 w-4" />
                 </Button>

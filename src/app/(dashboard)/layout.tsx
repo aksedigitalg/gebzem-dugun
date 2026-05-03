@@ -5,7 +5,7 @@ import { Footer } from "@/components/layout/footer";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  if (!session?.user) redirect("/giris");
+  if (!session?.user) redirect("/cift");
 
   return (
     <div className="flex min-h-screen flex-col">

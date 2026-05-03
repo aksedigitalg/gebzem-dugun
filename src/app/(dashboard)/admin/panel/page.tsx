@@ -20,7 +20,7 @@ const cards = [
 export default async function AdminPage() {
   const session = await auth();
   const role = session?.user?.role;
-  if (role !== "ADMIN" && role !== "SUPER_ADMIN") redirect("/");
+  if (role !== "ADMIN" && role !== "SUPER_ADMIN") redirect("/admin");
 
   return (
     <div>
