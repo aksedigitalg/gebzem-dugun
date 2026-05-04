@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { siteConfig } from "@/config/site";
 import { AuthSessionProvider } from "@/components/auth/session-provider";
+import { auth } from "@/auth";
 import "./globals.css";
 
 // Google Sans (proprietary) yerine Google Sans Flex — Google'ın açık lisanslı (OFL)
@@ -50,7 +51,12 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Sunucudan oturumu çekip provider'a geçiriyoruz: ilk render'da
+  // useSession() hemen "authenticated"/"unauthenticated" döner, böylece
+  // login sonrası "Giriş Yap" butonu kısa süre yanıp sönmez.
+  const session = await auth();
+
   return (
     <html lang="tr" suppressHydrationWarning>
       <head>
@@ -62,7 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="font-sans antialiased">
-        <AuthSessionProvider>{children}</AuthSessionProvider>
+        <AuthSessionProvider session={session}>{children}</AuthSessionProvider>
       </body>
     </html>
   );

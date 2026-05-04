@@ -91,13 +91,13 @@ export default async function FirmaProfilPage({
         )}
       </section>
 
-      <div className="container-page -mt-32 pb-16 md:-mt-24">
+      <div className="container-page -mt-16 pb-16 sm:-mt-20 md:-mt-24">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
           {/* Sol kolon */}
           <div className="space-y-6">
             {/* Header card */}
-            <header className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <nav className="mb-3 flex items-center gap-1 text-xs text-muted-foreground">
+            <header className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+              <nav className="mb-4 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
                 <Link href="/" className="hover:text-primary">Anasayfa</Link>
                 <ChevronRight className="h-3 w-3" />
                 {primaryCat && (
@@ -108,19 +108,23 @@ export default async function FirmaProfilPage({
                     <ChevronRight className="h-3 w-3" />
                   </>
                 )}
-                <span>{firm.name}</span>
+                <span className="truncate">{firm.name}</span>
               </nav>
 
-              <div className="flex flex-wrap items-start gap-4">
+              <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
                 {firm.logo ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={firm.logo} alt={firm.name} className="h-16 w-16 rounded-xl border border-border bg-white object-cover" />
+                  <img
+                    src={firm.logo}
+                    alt={firm.name}
+                    className="h-20 w-20 flex-shrink-0 rounded-2xl border border-border bg-white object-cover shadow-sm sm:h-24 sm:w-24"
+                  />
                 ) : (
-                  <span className="grid h-16 w-16 place-items-center rounded-xl bg-muted text-muted-foreground">
-                    <Building2 className="h-7 w-7" />
+                  <span className="grid h-20 w-20 flex-shrink-0 place-items-center rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 text-primary shadow-sm sm:h-24 sm:w-24">
+                    <Building2 className="h-9 w-9 sm:h-10 sm:w-10" />
                   </span>
                 )}
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
                       {firm.name}
@@ -136,7 +140,7 @@ export default async function FirmaProfilPage({
                       </Badge>
                     )}
                   </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
                     {firm.rating > 0 && (
                       <span className="inline-flex items-center gap-1">
                         <Star className="h-4 w-4 fill-amber-400 text-amber-400" />

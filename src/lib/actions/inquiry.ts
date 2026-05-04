@@ -32,111 +32,137 @@ export async function createInquiryAction(
   _prev: InquiryState,
   formData: FormData,
 ): Promise<InquiryState> {
-  // Rate limit
-  const h = await headers();
-  const ip = ipFromHeaders(h);
-  const rl = memoryRateLimit(`inquiry:${ip}`, LIMITS.inquiry.max, LIMITS.inquiry.windowMs);
-  if (!rl.ok) {
-    return { ok: false, error: "Çok fazla teklif gönderildi. Lütfen biraz sonra tekrar dene." };
-  }
-
-  const parsed = inquirySchema.safeParse({
-    firmId: String(formData.get("firmId") ?? ""),
-    weddingDate: String(formData.get("weddingDate") ?? ""),
-    guestCount: formData.get("guestCount") ? Number(formData.get("guestCount")) : undefined,
-    budget: formData.get("budget") ? Number(formData.get("budget")) : undefined,
-    message: String(formData.get("message") ?? ""),
-    contactPhone: String(formData.get("contactPhone") ?? ""),
-    contactEmail: String(formData.get("contactEmail") ?? ""),
-    preferredContact: String(formData.get("preferredContact") ?? "email"),
-  });
-  if (!parsed.success) {
-    const fieldErrors: Record<string, string> = {};
-    for (const issue of parsed.error.issues) {
-      const f = String(issue.path[0] ?? "");
-      if (f && !fieldErrors[f]) fieldErrors[f] = issue.message;
+  try {
+    // Rate limit
+    const h = await headers();
+    const ip = ipFromHeaders(h);
+    const rl = memoryRateLimit(`inquiry:${ip}`, LIMITS.inquiry.max, LIMITS.inquiry.windowMs);
+    if (!rl.ok) {
+      return { ok: false, error: "Çok fazla teklif gönderildi. Lütfen biraz sonra tekrar dene." };
     }
-    return { ok: false, error: "Form alanlarını kontrol et.", fieldErrors };
-  }
 
-  const session = await auth();
+    const parsed = inquirySchema.safeParse({
+      firmId: String(formData.get("firmId") ?? ""),
+      weddingDate: String(formData.get("weddingDate") ?? ""),
+      guestCount: formData.get("guestCount") ? Number(formData.get("guestCount")) : undefined,
+      budget: formData.get("budget") ? Number(formData.get("budget")) : undefined,
+      message: String(formData.get("message") ?? ""),
+      contactPhone: String(formData.get("contactPhone") ?? ""),
+      contactEmail: String(formData.get("contactEmail") ?? ""),
+      preferredContact: String(formData.get("preferredContact") ?? "email"),
+    });
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const f = String(issue.path[0] ?? "");
+        if (f && !fieldErrors[f]) fieldErrors[f] = issue.message;
+      }
+      return { ok: false, error: "Form alanlarını kontrol et.", fieldErrors };
+    }
 
-  // Firma kontrolü
-  const firm = await db.firm.findFirst({
-    where: { id: parsed.data.firmId, status: "ACTIVE" },
-    select: { id: true, slug: true, ownerId: true, name: true },
-  });
-  if (!firm) return { ok: false, error: "Firma bulunamadı veya yayında değil." };
+    const session = await auth();
 
-  // Kullanıcı yoksa anonim — bu durumda tek seferlik 'guest user' ile bağlama yerine
-  // sadece e-posta + telefon ile kayıt tutarız. (DB'de userId NOT NULL olduğu için
-  // kayıt için sistem 'guest' kullanıcısını lazy-create eder.)
-  let userId = session?.user?.id;
-  if (!userId) {
-    const guestEmail = parsed.data.contactEmail;
-    const existing = await db.user.findUnique({ where: { email: guestEmail } });
-    if (existing) {
-      userId = existing.id;
-    } else {
-      const guest = await db.user.create({
-        data: {
-          email: guestEmail,
-          name: parsed.data.contactEmail.split("@")[0],
-          role: "COUPLE",
-          status: "PENDING",
-          phone: parsed.data.contactPhone || null,
-        },
+    // Firma kontrolü
+    const firm = await db.firm.findFirst({
+      where: { id: parsed.data.firmId, status: "ACTIVE" },
+      select: { id: true, slug: true, ownerId: true, name: true },
+    });
+    if (!firm) return { ok: false, error: "Firma bulunamadı veya yayında değil." };
+
+    // Oturumlu kullanıcı varsa onu kullan; ama JWT'de id olup DB'de kullanıcı
+    // silinmişse FK violation'a takılırız. Önce var olduğunu doğrula.
+    let userId: string | undefined;
+    if (session?.user?.id) {
+      const existing = await db.user.findUnique({
+        where: { id: session.user.id },
+        select: { id: true },
       });
-      userId = guest.id;
+      if (existing) userId = existing.id;
     }
-  }
 
-  const weddingDate = parsed.data.weddingDate ? new Date(parsed.data.weddingDate) : null;
+    // Kullanıcı yoksa (anonim ya da silinmiş hesap) e-posta üzerinden lazy-create.
+    if (!userId) {
+      const guestEmail = parsed.data.contactEmail;
+      const existing = await db.user.findUnique({ where: { email: guestEmail } });
+      if (existing) {
+        userId = existing.id;
+      } else {
+        const guest = await db.user.create({
+          data: {
+            email: guestEmail,
+            name: parsed.data.contactEmail.split("@")[0],
+            role: "COUPLE",
+            status: "PENDING",
+            phone: parsed.data.contactPhone || null,
+          },
+        });
+        userId = guest.id;
+      }
+    }
 
-  const inquiry = await db.inquiry.create({
-    data: {
+    const weddingDate = parsed.data.weddingDate ? new Date(parsed.data.weddingDate) : null;
+
+    const inquiry = await db.inquiry.create({
+      data: {
+        userId,
+        firmId: firm.id,
+        weddingDate,
+        guestCount: parsed.data.guestCount ?? null,
+        budget: parsed.data.budget ?? null,
+        message: sanitizeText(parsed.data.message, 2000),
+        contactPhone: parsed.data.contactPhone,
+        contactEmail: parsed.data.contactEmail,
+        preferredContact: parsed.data.preferredContact,
+        status: "NEW",
+      },
+    });
+
+    // Stat — kritik değil, hata olursa atla.
+    try {
+      await db.firm.update({
+        where: { id: firm.id },
+        data: { inquiryCount: { increment: 1 } },
+      });
+    } catch (e) {
+      console.error("[inquiry] firm count update failed:", e);
+    }
+
+    // Bildirim → firma sahibi (kritik değil, hata olursa atla)
+    if (firm.ownerId) {
+      try {
+        await notify({
+          userId: firm.ownerId,
+          kind: "INQUIRY_NEW",
+          title: "Yeni teklif isteği",
+          body: `${parsed.data.contactEmail} sizden teklif istedi.`,
+          link: `/firma-paneli/teklifler/${inquiry.id}`,
+        });
+      } catch (e) {
+        console.error("[inquiry] notify failed:", e);
+      }
+    }
+
+    await audit({
       userId,
-      firmId: firm.id,
-      weddingDate,
-      guestCount: parsed.data.guestCount ?? null,
-      budget: parsed.data.budget ?? null,
-      message: sanitizeText(parsed.data.message, 2000),
-      contactPhone: parsed.data.contactPhone,
-      contactEmail: parsed.data.contactEmail,
-      preferredContact: parsed.data.preferredContact,
-      status: "NEW",
-    },
-  });
+      actorRole: session?.user?.role ?? "GUEST",
+      action: "INQUIRY_CREATE",
+      resource: "Inquiry",
+      resourceId: inquiry.id,
+      meta: { firmId: firm.id, firmSlug: firm.slug },
+    });
 
-  // Stat
-  await db.firm.update({
-    where: { id: firm.id },
-    data: { inquiryCount: { increment: 1 } },
-  });
+    revalidatePath(`/firma/${firm.slug}`);
+    revalidatePath(`/firma-paneli/teklifler`);
+    revalidatePath(`/hesabim/tekliflerim`);
 
-  // Bildirim → firma sahibi
-  await notify({
-    userId: firm.ownerId,
-    kind: "INQUIRY_NEW",
-    title: "Yeni teklif isteği",
-    body: `${parsed.data.contactEmail} sizden teklif istedi.`,
-    link: `/firma-paneli/teklifler/${inquiry.id}`,
-  });
-
-  await audit({
-    userId,
-    actorRole: session?.user?.role ?? "GUEST",
-    action: "INQUIRY_CREATE",
-    resource: "Inquiry",
-    resourceId: inquiry.id,
-    meta: { firmId: firm.id, firmSlug: firm.slug },
-  });
-
-  revalidatePath(`/firma/${firm.slug}`);
-  revalidatePath(`/firma-paneli/teklifler`);
-  revalidatePath(`/hesabim/tekliflerim`);
-
-  return { ok: true };
+    return { ok: true };
+  } catch (error) {
+    console.error("[createInquiryAction] failed:", error);
+    return {
+      ok: false,
+      error: "Teklif gönderilemedi. Lütfen biraz sonra tekrar dene.",
+    };
+  }
 }
 
 const inquiryReplySchema = z.object({

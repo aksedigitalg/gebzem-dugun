@@ -13,6 +13,7 @@ export function MessageButton({ firmId, firmName }: { firmId: string; firmName: 
   const [pending, startTransition] = React.useTransition();
   const [opened, setOpened] = React.useState(false);
   const [text, setText] = React.useState("");
+  const [error, setError] = React.useState<string | null>(null);
 
   if (status === "unauthenticated") {
     return (
@@ -40,12 +41,15 @@ export function MessageButton({ firmId, firmName }: { firmId: string; firmName: 
   return (
     <form
       action={(fd) => {
+        setError(null);
         startTransition(async () => {
           const result = await sendMessageAction({}, fd);
           if (result.ok) {
             setText("");
             router.push("/hesabim/mesajlar");
             router.refresh();
+          } else {
+            setError(result.error ?? "Mesaj gönderilemedi.");
           }
         });
       }}
@@ -63,6 +67,11 @@ export function MessageButton({ firmId, firmName }: { firmId: string; firmName: 
         placeholder={`${firmName}'e mesajını yaz…`}
         className="w-full resize-none rounded-lg border border-border bg-background p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
       />
+      {error && (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          {error}
+        </p>
+      )}
       <div className="flex gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={() => setOpened(false)} className="flex-1">
           Vazgeç
