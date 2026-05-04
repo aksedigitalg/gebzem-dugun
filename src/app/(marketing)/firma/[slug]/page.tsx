@@ -295,7 +295,7 @@ export default async function FirmaProfilPage({
                     <li key={r.id} className="rounded-xl border border-border bg-muted/30 p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="font-medium">{r.user.name ?? "Anonim"}</p>
+                          <p className="font-medium">{r.user?.name ?? "Anonim"}</p>
                           <div className="flex items-center gap-1">
                             {Array.from({ length: 5 }).map((_, i) => (
                               <Star
@@ -421,11 +421,11 @@ export default async function FirmaProfilPage({
         </div>
       </div>
 
-      {/* JSON-LD: LocalBusiness */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+      {/* JSON-LD: LocalBusiness — Defansif: hata olursa boş bırak, sayfa
+          patlamasın diye try/catch içinde üretiyoruz. */}
+      {(() => {
+        try {
+          const ld = {
             "@context": "https://schema.org",
             "@type": "LocalBusiness",
             "@id": `${siteConfig.url}/firma/${firm.slug}#business`,
@@ -461,14 +461,26 @@ export default async function FirmaProfilPage({
               review: firm.reviews.slice(0, 5).map((r) => ({
                 "@type": "Review",
                 reviewRating: { "@type": "Rating", ratingValue: r.rating },
-                author: { "@type": "Person", name: r.user.name ?? "Anonim" },
+                author: { "@type": "Person", name: r.user?.name ?? "Anonim" },
                 reviewBody: r.content,
-                datePublished: r.createdAt.toISOString(),
+                datePublished:
+                  r.createdAt instanceof Date
+                    ? r.createdAt.toISOString()
+                    : new Date(r.createdAt as unknown as string).toISOString(),
               })),
             }),
-          }),
-        }}
-      />
+          };
+          return (
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
+            />
+          );
+        } catch (e) {
+          console.error("[firm-page] JSON-LD generation failed:", e);
+          return null;
+        }
+      })()}
     </div>
   );
 }
