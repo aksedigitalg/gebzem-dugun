@@ -43,19 +43,29 @@ export default async function FirmaProfilPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const firm = await getFirmBySlug(slug);
+
+  let firm: Awaited<ReturnType<typeof getFirmBySlug>> = null;
+  try {
+    firm = await getFirmBySlug(slug);
+  } catch (e) {
+    console.error("[firm-page] getFirmBySlug failed:", e);
+  }
   if (!firm) notFound();
 
   const primaryCat = firm.categories.find((c) => c.isPrimary)?.category;
 
-  // Bu kullanıcı bu firmayı favorilemiş mi?
-  const session = await auth();
+  // Bu kullanıcı bu firmayı favorilemiş mi? — Hata olursa sayfayı patlatma.
   let isFavorited = false;
-  if (session?.user?.id) {
-    const fav = await db.favorite.findUnique({
-      where: { userId_firmId: { userId: session.user.id, firmId: firm.id } },
-    });
-    isFavorited = !!fav;
+  try {
+    const session = await auth();
+    if (session?.user?.id) {
+      const fav = await db.favorite.findUnique({
+        where: { userId_firmId: { userId: session.user.id, firmId: firm.id } },
+      });
+      isFavorited = !!fav;
+    }
+  } catch (e) {
+    console.error("[firm-page] favorite lookup failed:", e);
   }
 
   return (

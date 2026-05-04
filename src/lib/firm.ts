@@ -89,7 +89,7 @@ export async function getFeaturedFirms(take = 8): Promise<FirmCard[]> {
 }
 
 export async function getFirmBySlug(slug: string) {
-  return db.firm.findUnique({
+  return db.firm.findFirst({
     where: { slug, status: "ACTIVE" },
     include: {
       categories: { include: { category: true } },
