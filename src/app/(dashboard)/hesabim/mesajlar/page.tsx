@@ -15,16 +15,31 @@ export default async function CoupleMessagesPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/cift");
 
-  const conversations = await db.conversation.findMany({
-    where: { userId: session.user.id },
-    include: {
-      firm: { select: { id: true, slug: true, name: true, logo: true } },
-      messages: { orderBy: { createdAt: "desc" }, take: 1 },
-    },
-    orderBy: [{ lastMessageAt: "desc" }, { createdAt: "desc" }],
-  });
+  let conversations: Awaited<ReturnType<typeof db.conversation.findMany>> = [];
+  try {
+    conversations = await db.conversation.findMany({
+      where: { userId: session.user.id },
+      include: {
+        firm: { select: { id: true, slug: true, name: true, logo: true } },
+        messages: { orderBy: { createdAt: "desc" }, take: 1 },
+      },
+      orderBy: [{ lastMessageAt: "desc" }, { createdAt: "desc" }],
+    });
+  } catch (e) {
+    console.error("[hesabim/mesajlar] conversation fetch failed:", e);
+  }
 
-  const navItems = await coupleNavItems(session.user.id);
+  // Bozuk veri (firm cascade kaçmış) konuşmaları ele
+  const safeConversations = conversations.filter(
+    (c): c is typeof c & { firm: NonNullable<(typeof c)["firm"]> } => Boolean(c.firm),
+  );
+
+  let navItems: Awaited<ReturnType<typeof coupleNavItems>> = [];
+  try {
+    navItems = await coupleNavItems(session.user.id);
+  } catch (e) {
+    console.error("[hesabim/mesajlar] navItems failed:", e);
+  }
 
   return (
     <DashboardShell
@@ -34,7 +49,7 @@ export default async function CoupleMessagesPage() {
       navItems={navItems}
       currentPath="/hesabim/mesajlar"
     >
-      {conversations.length === 0 ? (
+      {safeConversations.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-12 text-center">
           <MessageSquare className="mx-auto h-10 w-10 text-muted-foreground/40" />
           <p className="mt-3 font-display text-lg font-semibold">Henüz konuşma yok</p>
@@ -44,7 +59,7 @@ export default async function CoupleMessagesPage() {
         </div>
       ) : (
         <ul className="divide-y divide-border rounded-2xl border border-border bg-card">
-          {conversations.map((c) => (
+          {safeConversations.map((c) => (
             <li key={c.id}>
               <Link
                 href={`/hesabim/mesajlar/${c.id}`}
