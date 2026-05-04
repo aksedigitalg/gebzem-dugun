@@ -60,116 +60,125 @@ export default async function FirmaProfilPage({
 
   return (
     <div className="bg-muted/20">
-      {/* HERO */}
-      <section className="relative h-64 w-full overflow-hidden sm:h-80 md:h-96">
+      {/* Breadcrumb */}
+      <div className="border-b border-border bg-background">
+        <div className="container-page py-3">
+          <nav className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+            <Link href="/" className="hover:text-primary">Anasayfa</Link>
+            <ChevronRight className="h-3 w-3" />
+            {primaryCat && (
+              <>
+                <Link href={`/kategori/${primaryCat.slug}`} className="hover:text-primary">
+                  {primaryCat.name}
+                </Link>
+                <ChevronRight className="h-3 w-3" />
+              </>
+            )}
+            <span className="truncate font-medium text-foreground">{firm.name}</span>
+          </nav>
+        </div>
+      </div>
+
+      {/* HERO — kapak görseli ya da gradient */}
+      <section className="relative h-56 w-full overflow-hidden sm:h-72 md:h-80">
         {firm.coverImage ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={firm.coverImage} alt={firm.name} className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
           </>
         ) : (
-          // Görsel yoksa: dekoratif gradient + firma adı + animasyonlu desen
-          <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-br from-primary via-secondary to-accent">
-            {/* Dekoratif blur'lu daireler */}
+          <div className="relative h-full w-full overflow-hidden bg-gradient-to-br from-primary via-secondary to-accent">
             <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-white/15 blur-3xl" aria-hidden />
             <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-white/10 blur-3xl" aria-hidden />
             <div className="absolute inset-0 [background-image:radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:24px_24px]" aria-hidden />
-
-            <div className="relative z-10 px-6 text-center">
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/70">
-                {primaryCat?.name ?? "Düğün Hizmeti"}
-              </p>
-              <h1 className="mt-3 font-display text-4xl font-semibold text-white drop-shadow-lg sm:text-5xl md:text-6xl">
-                {firm.name}
-              </h1>
-              <p className="mt-3 inline-flex items-center gap-1.5 text-sm text-white/85">
-                <MapPin className="h-3.5 w-3.5" /> {firm.district}, {firm.city}
-              </p>
-            </div>
           </div>
         )}
       </section>
 
-      <div className="container-page -mt-16 pb-16 sm:-mt-20 md:-mt-24">
+      {/* INFO BAR — hero ile content arasında, logo'yu hero'ya taşırarak Airbnb stili */}
+      <div className="container-page">
+        <div className="relative -mt-12 mb-6 flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-lg sm:flex-row sm:items-center sm:gap-6 sm:p-6">
+          {/* Logo / placeholder — büyük, hero'ya doğru taşmış */}
+          {firm.logo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={firm.logo}
+              alt={firm.name}
+              className="h-24 w-24 flex-shrink-0 rounded-2xl border-2 border-background bg-white object-cover shadow-md sm:-mt-12 sm:h-28 sm:w-28"
+            />
+          ) : (
+            <span className="grid h-24 w-24 flex-shrink-0 place-items-center rounded-2xl border-2 border-background bg-gradient-to-br from-primary/15 via-secondary/15 to-accent/15 text-primary shadow-md sm:-mt-12 sm:h-28 sm:w-28">
+              <Building2 className="h-10 w-10 sm:h-12 sm:w-12" />
+            </span>
+          )}
+
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">
+                {firm.name}
+              </h1>
+              {firm.isVerified && (
+                <Badge variant="success" className="gap-1">
+                  <ShieldCheck className="h-3 w-3" /> Doğrulanmış
+                </Badge>
+              )}
+              {firm.isFeatured && (
+                <Badge variant="premium" className="gap-1">
+                  <Award className="h-3 w-3" /> Premium
+                </Badge>
+              )}
+            </div>
+
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+              {firm.rating > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  <strong className="text-foreground">{firm.rating.toFixed(1)}</strong>
+                  <span>({firm.reviewCount} yorum)</span>
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5" /> {firm.district}, {firm.city}
+              </span>
+              {firm.founded && (
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="h-3.5 w-3.5" /> {firm.founded}'den beri
+                </span>
+              )}
+              {primaryCat && (
+                <Link
+                  href={`/kategori/${primaryCat.slug}`}
+                  className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/20"
+                >
+                  {primaryCat.name}
+                </Link>
+              )}
+            </div>
+
+            {firm.categories.length > 1 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {firm.categories
+                  .filter((c) => !c.isPrimary)
+                  .map(({ category }) => (
+                    <Link
+                      key={category.id}
+                      href={`/kategori/${category.slug}`}
+                      className="rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-[11px] text-foreground/70 hover:border-primary hover:text-primary"
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="container-page pb-16">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
           {/* Sol kolon */}
           <div className="space-y-6">
-            {/* Header card */}
-            <header className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
-              <nav className="mb-4 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-                <Link href="/" className="hover:text-primary">Anasayfa</Link>
-                <ChevronRight className="h-3 w-3" />
-                {primaryCat && (
-                  <>
-                    <Link href={`/kategori/${primaryCat.slug}`} className="hover:text-primary">
-                      {primaryCat.name}
-                    </Link>
-                    <ChevronRight className="h-3 w-3" />
-                  </>
-                )}
-                <span className="truncate">{firm.name}</span>
-              </nav>
-
-              <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-                {firm.logo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={firm.logo}
-                    alt={firm.name}
-                    className="h-20 w-20 flex-shrink-0 rounded-2xl border border-border bg-white object-cover shadow-sm sm:h-24 sm:w-24"
-                  />
-                ) : (
-                  <span className="grid h-20 w-20 flex-shrink-0 place-items-center rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 text-primary shadow-sm sm:h-24 sm:w-24">
-                    <Building2 className="h-9 w-9 sm:h-10 sm:w-10" />
-                  </span>
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-                      {firm.name}
-                    </h1>
-                    {firm.isVerified && (
-                      <Badge variant="success" className="gap-1">
-                        <ShieldCheck className="h-3 w-3" /> Doğrulanmış
-                      </Badge>
-                    )}
-                    {firm.isFeatured && (
-                      <Badge variant="premium" className="gap-1">
-                        <Award className="h-3 w-3" /> Premium
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
-                    {firm.rating > 0 && (
-                      <span className="inline-flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                        <strong className="text-foreground">{firm.rating.toFixed(1)}</strong> ({firm.reviewCount} yorum)
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5" /> {firm.district}, {firm.city}
-                    </span>
-                    {firm.founded && (
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5" /> {firm.founded}'den beri
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {firm.categories.map(({ category }) => (
-                      <Link
-                        key={category.id}
-                        href={`/kategori/${category.slug}`}
-                        className="rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-foreground/80 hover:border-primary hover:text-primary"
-                      >
-                        {category.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </header>
 
             {/* Hakkımızda */}
             <section className="rounded-2xl border border-border bg-card p-6">
@@ -320,10 +329,18 @@ export default async function FirmaProfilPage({
 
           {/* Sağ kolon — sticky aksiyon paneli */}
           <aside className="lg:sticky lg:top-20 lg:self-start">
-            <div className="space-y-3 rounded-2xl border border-border bg-card p-5 shadow-sm">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Bu firmayla iletişime geç
-              </p>
+            <div className="space-y-3 rounded-2xl border border-border bg-card p-5 shadow-md">
+              <div className="border-b border-border pb-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+                  Hızlı İletişim
+                </p>
+                <p className="mt-0.5 text-sm font-medium text-foreground">
+                  Bu firmayla iletişime geç
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  24 saat içinde dönüş yapılır
+                </p>
+              </div>
               <InquiryButton firmId={firm.id} firmName={firm.name} />
               <MessageButton firmId={firm.id} firmName={firm.name} />
               <FavoriteButton firmId={firm.id} initiallyFavorited={isFavorited} />
